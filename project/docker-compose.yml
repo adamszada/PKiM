@@ -1,0 +1,29 @@
+version: "3.8"
+services:
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    volumes:
+      - ./python/send_email.py:/app/send_email.py
+    ports:
+      - 3000:3000
+    depends_on:
+      - mongo
+  mongo:
+    build:
+      context: ./mongo
+      dockerfile: Dockerfile
+    ports:
+      - 27017:27017
+  mongo-express:
+    build:
+      context: ./mongo-express
+      dockerfile: Dockerfile
+    ports:
+      - 8081:8081
+  python:
+    build:
+      context: ./python
+      dockerfile: Dockerfile
+

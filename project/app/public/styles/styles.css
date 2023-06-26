@@ -1,0 +1,54 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+  }
+  
+  h1 {
+    text-align: center;
+  }
+  
+  .form-container {
+    margin-bottom: 20px;
+  }
+  
+  .form-container label,
+  .form-container input,
+  .form-container button {
+    display: block;
+    margin-bottom: 10px;
+  }
+  
+  .task-list {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .task-list li {
+    margin-bottom: 10px;
+  }
+  
+  .task-list li .task-time {
+    font-weight: bold;
+  }
+  
+  .task-list li .task-details {
+    margin-left: 15px;
+    font-style: italic;
+  }
+  
+  .error-message {
+    color: red;
+  }
+  
+  .success-message {
+    color: green;
+  }
+
+  .delete-button-container {
+    margin-right: 10px;
+  }
+
+  .task-status {
+    margin-left: 10px;
+  }
+  

@@ -1,0 +1,7 @@
+FROM mongo-express
+
+ENV ME_CONFIG_MONGODB_SERVER mongo
+ENV ME_CONFIG_MONGODB_PORT 27017
+
+CMD ["mongo-express"]
+

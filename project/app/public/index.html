@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Todo List</title>
+  <link rel="stylesheet" href="styles/styles.css">
+</head>
+<body>
+  <h1>Todo List</h1>
+  
+  <div class="form-container">
+    <h2>Add Task</h2>
+    <form id="addTaskForm">
+      <label for="task">Task:</label>
+      <input type="text" id="task" required>
+      
+      <label for="time">Time:</label>
+      <input type="datetime-local" id="time" required>
+      
+      <label for="isAPI">Is API:</label>
+      <input type="checkbox" id="isAPI">
+      
+      <label for="url">URL:</label>
+      <input type="text" id="url">
+      
+      <label for="params">Params:</label>
+      <input type="text" id="params">
+      
+      <label for="email">Email:</label>
+      <input type="email" id="email">
+
+      <button type="submit">Add Task</button>
+    </form>
+  </div>
+  
+
+  <div>
+    <h2>Task List</h2>
+    <ul class="task-list" id="taskList"></ul>
+  </div>
+  
+  <script>
+    const addTaskForm = document.getElementById('addTaskForm');
+    const taskList = document.getElementById('taskList');
+    
+    function createTaskListItem(task) {
+      const listItem = document.createElement('li');
+      const taskTime = document.createElement('span');
+      const taskDetails = document.createElement('span');
+      const taskStatus = document.createElement('span'); // Dodane pole "status"
+
+      taskTime.classList.add('task-time');
+      taskDetails.classList.add('task-details');
+      taskStatus.classList.add('task-status'); // Dodane pole "status"
+
+      taskTime.textContent = task.time;
+      taskDetails.textContent = task.task;
+      taskStatus.textContent = task.status; // Dodane pole "status"
+
+      if (task.isAPI) {
+        const apiUrl = document.createElement('p');
+        const apiParams = document.createElement('p');
+
+        apiUrl.textContent = 'URL: ' + task.url;
+        apiParams.textContent = 'Params: ' + task.params;
+
+        taskDetails.appendChild(apiUrl);
+        taskDetails.appendChild(apiParams);
+      }
+      const deleteButton = document.createElement('button');
+      deleteButton.textContent = 'Usuń';
+      deleteButton.setAttribute('data-task-id', task._id);
+
+      listItem.appendChild(deleteButton);
+
+      listItem.appendChild(taskTime);
+      listItem.appendChild(taskDetails);
+      listItem.appendChild(taskStatus); 
+
+      appendTaskStatusSelect(listItem);
+
+      if (task.isAPI) {
+        const viewResponseButton = document.createElement('button');
+        viewResponseButton.textContent = 'Wyświetl odpowiedź';
+        viewResponseButton.setAttribute('data-response-id', task._id); // Ustawienie właściwości data-response-id
+        listItem.appendChild(viewResponseButton);
+      }
+
+      return listItem;
+    }
+    
+    function fetchTasks() {
+      fetch('/tasks')
+        .then(response => response.json())
+        .then(data => {
+          taskList.innerHTML = '';
+          data.forEach(task => {
+            const listItem = createTaskListItem(task);
+            taskList.appendChild(listItem);
+          });
+        })
+        .catch(error => {
+          console.error('Error while fetching tasks:', error);
+        });
+    }
+    
+    // Event listener for the form submission
+    addTaskForm.addEventListener('submit', event => {
+      event.preventDefault();
+      
+      const task = document.getElementById('task').value;
+      const time = document.getElementById('time').value;
+      const isAPI = document.getElementById('isAPI').checked;
+      const url = document.getElementById('url').value;
+      const params = document.getElementById('params').value;
+      const email = document.getElementById('email').value; 
+      
+      const currentTime = new Date();
+      const inputTime = new Date(time);
+      
+      if (inputTime < currentTime) {
+        alert('Wprowadzona data nie może być wcześniejsza niż obecna');
+        return;
+      }
+
+      const formData = {
+        task,
+        time,
+        isAPI,
+        url,
+        params,
+        email 
+      };
+      
+      fetch('/tasks', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            console.error('Error while adding task:', data.error);
+          } else {
+            console.log('Task added successfully:', data.message);
+            fetchTasks();
+            addTaskForm.reset();
+          }
+        })
+        .catch(error => {
+          console.error('Error while adding task:', error);
+        });
+    });
+
+    function deleteTask(taskId) {
+      fetch(`/tasks/${taskId}`, {
+        method: 'DELETE'
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            console.error('Error while deleting task:', data.error);
+          } else {
+            fetchTasks();
+          }
+        })
+        .catch(error => {
+          console.error('Error while deleting task:', error);
+        });
+    }
+
+    taskList.addEventListener('click', event => {
+      if (event.target.textContent === 'Usuń') {
+        const taskId = event.target.getAttribute('data-task-id'); // Pobierz identyfikator zadania z atrybutu data-task-id
+        deleteTask(taskId); // Wywołaj funkcję deleteTask() z identyfikatorem zadania
+      }
+
+      if (event.target.textContent === 'Wyświetl odpowiedź') {
+        const responseId = event.target.getAttribute('data-response-id');
+        if (responseId) {
+          window.open(`/api-responses/${responseId}`, '_blank');
+        }
+      }
+    });
+
+    function updateTaskStatus(taskId, status) {
+      fetch(`/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status })
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.error) {
+            console.error('Error while updating task status:', data.error);
+          } else {
+            fetchTasks();
+          }
+        })
+        .catch(error => {
+          console.error('Error while updating task status:', error);
+        });
+    }
+
+    taskList.addEventListener('change', event => {
+      if (event.target.classList.contains('task-status')) {
+        const taskId = event.target.parentNode.querySelector('button').getAttribute('data-task-id');
+        const status = event.target.value;
+        updateTaskStatus(taskId, status);
+      }
+    });
+
+    function createTaskStatusSelect() {
+      const select = document.createElement('select');
+      select.classList.add('task-status');
+
+      const options = ['To Do', 'In Progress', 'Completed'];
+      options.forEach(option => {
+        const optionElement = document.createElement('option');
+        optionElement.value = option;
+        optionElement.textContent = option;
+        select.appendChild(optionElement);
+      });
+
+      return select;
+    }
+
+    function appendTaskStatusSelect(listItem) {
+      const taskStatusSelect = createTaskStatusSelect();
+      listItem.appendChild(taskStatusSelect);
+    }
+    
+    // Fetch tasks on page load
+    fetchTasks();
+  </script>
+</body>
+</html>
